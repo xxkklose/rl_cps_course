@@ -1,0 +1,6 @@
+mujoco
+dm-control
+numpy<2.0.0
+gymnasium
+pyyaml
+imageio

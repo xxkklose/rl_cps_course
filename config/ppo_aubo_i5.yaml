@@ -1,0 +1,14 @@
+env_id: manipulator_mujoco/AuboI5Env-v0
+total_steps: 100000
+rollout_len: 2048
+update_epochs: 10
+minibatch_size: 256
+gamma: 0.99
+lam: 0.95
+clip_ratio: 0.2
+vf_coef: 0.5
+ent_coef: 0.0
+lr: 0.0003
+device: cpu
+render: false
+save_dir: runs/ppo_aubo_i5
