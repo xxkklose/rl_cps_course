@@ -8,3 +8,5 @@ stable_baselines3
 pygame
 tensorboard
 stable-baselines3[extra]
+imageio[ffmpeg]
+imageio[pyav]

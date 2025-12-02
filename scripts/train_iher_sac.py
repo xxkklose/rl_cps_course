@@ -40,7 +40,7 @@ def train(env_id: str = "FetchPickAndPlace-v4",
         policy_kwargs=policy_kwargs,
         seed=seed,
         device=device,
-        tensorboard_log="./iher_sac_tb",
+        tensorboard_log="./logs/iher_sac",
     )
     model.learn(total_timesteps=total_timesteps, log_interval=10, progress_bar=True)
 

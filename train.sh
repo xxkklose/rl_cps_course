@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 algo=${1}
 env=${2:-"FetchPickAndPlace-v4"}
@@ -12,9 +13,23 @@ TAU=0.05
 GAMMA=0.95
 DEVICE="cuda"
 
+PY_CMD="${PYTHON:-}"
+if [ -z "${PY_CMD}" ]; then
+    if [ -x ".venv/bin/python" ]; then
+        PY_CMD=".venv/bin/python"
+    elif command -v python >/dev/null 2>&1; then
+        PY_CMD="python"
+    elif command -v python3 >/dev/null 2>&1; then
+        PY_CMD="python3"
+    else
+        echo "Error: Python interpreter not found. Install python3 or set PYTHON env." >&2
+        exit 127
+    fi
+fi
+
 case ${algo} in
     iher_sac)
-        python -m scripts.train_iher_sac \
+        "${PY_CMD}" -m scripts.train_iher_sac \
             --env ${env} \
             --seed ${SEED} \
             --total_timesteps ${TOTAL_TIMESTEPS} \
@@ -26,7 +41,7 @@ case ${algo} in
             --device ${DEVICE}
         ;;
     her_sac)
-        python -m scripts.train_her_sac_basline \
+        "${PY_CMD}" -m scripts.train_her_sac_basline \
             --env ${env} \
             --seed ${SEED} \
             --total_timesteps ${TOTAL_TIMESTEPS} \
@@ -39,7 +54,7 @@ case ${algo} in
         ;;
     ppo)
         # PPO 特殊参数
-        python -m scripts.train_ppo_baseline \
+        "${PY_CMD}" -m scripts.train_ppo_baseline \
             --env ${env} \
             --seed ${SEED} \
             --total_timesteps ${TOTAL_TIMESTEPS} \

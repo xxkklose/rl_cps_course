@@ -3,7 +3,8 @@ This is the code submission for the IOTA 5201 course. Core content includes:
 - Implementation of SAC with Improved HER buffer
 - Application of IHER-SAC on FetchPickAndPlace-v4 environment
 
-<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac_fetch.mp4" controls width="480"></video>&nbsp;<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac.mp4" controls width="480"></video>
+![iher_sac](https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac.gif)
+![iher_sac_fetch](https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac_fetch.gif)
 
 # Installation
 git clone this repository:
