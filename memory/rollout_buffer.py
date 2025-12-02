@@ -48,6 +48,7 @@ class RolloutBuffer:
             "obs": self.obs.copy(),
             "acts": self.acts.copy(),
             "logps": self.logps.copy(),
+            "rews": self.rews.copy(),
             "rets": self.ret.copy(),
             "advs": adv.copy(),
             "vals": self.vals.copy(),

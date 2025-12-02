@@ -1,7 +1,6 @@
 import time
 import numpy as np
 from dm_control import mjcf
-import mujoco.viewer
 import gymnasium as gym
 from gymnasium import spaces
 from manipulator_mujoco.arenas import StandardArena
@@ -9,13 +8,14 @@ from manipulator_mujoco.robots import AuboI5, AG95
 from manipulator_mujoco.props import Primitive
 from manipulator_mujoco.mocaps import Target
 from manipulator_mujoco.controllers import OperationalSpaceController
+from manipulator_mujoco.utils.transform_utils import axisangle2quat, quat_multiply, mat2quat, get_orientation_error
 
 class AuboI5Env(gym.Env):
 
     metadata = {
         "render_modes": ["human", "rgb_array"],
-        "render_fps": None,
-    }  # TODO add functionality to render_fps
+        "render_fps": 30,
+    }
 
     def __init__(self, render_mode=None):
         self.observation_space = spaces.Box(
@@ -30,7 +30,7 @@ class AuboI5Env(gym.Env):
         )
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
-        self._render_mode = render_mode
+        self.render_mode = render_mode
 
         ############################
         # create MJCF model
@@ -84,11 +84,11 @@ class AuboI5Env(gym.Env):
         self._timestep = self._physics.model.opt.timestep
         self._viewer = None
         self._step_start = None
+        self._grasped = False
 
     def _get_obs(self) -> np.ndarray:
         ee_pos = self._physics.bind(self._arm.eef_site).xpos
         box_pos = self._physics.bind(self._box_frame).xpos
-        from manipulator_mujoco.utils.transform_utils import get_orientation_error, mat2quat
         ee_quat = mat2quat(self._physics.bind(self._arm.eef_site).xmat.reshape(3, 3))
         box_quat = mat2quat(self._physics.bind(self._box_frame).xmat.reshape(3, 3))
         pos_err = box_pos - ee_pos
@@ -111,6 +111,7 @@ class AuboI5Env(gym.Env):
             self._physics.bind(self._gripper.actuator).ctrl = 0.0
 
         self._step_count = 0
+        self._grasped = False
 
         observation = self._get_obs()
         info = self._get_info()
@@ -125,7 +126,6 @@ class AuboI5Env(gym.Env):
         target_pose = self._target.get_mocap_pose(self._physics)
         pos = target_pose[:3]
         quat = target_pose[3:]
-        from manipulator_mujoco.utils.transform_utils import axisangle2quat, quat_multiply
         dq = axisangle2quat(dabg)
         new_quat = quat_multiply(dq, quat)
         new_pos = pos + dpos
@@ -136,20 +136,31 @@ class AuboI5Env(gym.Env):
         self._physics.step()
 
         # render frame
-        if self._render_mode == "human":
+        if self.render_mode == "human":
             self._render_frame()
         
         observation = self._get_obs()
         ee_pos = self._physics.bind(self._arm.eef_site).xpos
         box_pos = self._physics.bind(self._box_frame).xpos
+        ee_quat = mat2quat(self._physics.bind(self._arm.eef_site).xmat.reshape(3, 3))
+        box_quat = mat2quat(self._physics.bind(self._box_frame).xmat.reshape(3, 3))
         dist = np.linalg.norm(ee_pos - box_pos)
         lift = box_pos[2]
-        reward = -dist + 5.0 * max(0.0, lift - 0.05)
+        close_level = np.clip((grip + 1.0) / 2.0, 0.0, 1.0)
+        near = max(0.0, 0.03 - dist) / 0.03
+        # sticky grasp: attach when close and closed
+        if (not self._grasped) and (close_level > 0.9) and (dist < 0.02):
+            self._grasped = True
+        if self._grasped and close_level < 0.2:
+            self._grasped = False
+        orn_err = get_orientation_error(box_quat, ee_quat)
+        orn_mag = np.linalg.norm(orn_err)
+        reward = -dist - 0.5 * orn_mag + 5.0 * max(0.0, lift - 0.05) + 1.0 * near * close_level + 2.0 * max(0.0, lift - 0.05) * close_level
         success = dist < 0.02 and lift > 0.06
         self._step_count += 1
         terminated = bool(success)
         truncated = self._step_count >= 1000
-        info = {"distance": float(dist), "lift": float(lift), "success": success}
+        info = {"distance": float(dist), "lift": float(lift), "success": success, "grip": close_level, "grasped": self._grasped}
 
         return observation, reward, terminated, truncated, info
 
@@ -160,24 +171,24 @@ class AuboI5Env(gym.Env):
         Returns:
             np.ndarray: RGB array of the current frame.
         """
-        if self._render_mode == "rgb_array":
+        if self.render_mode == "rgb_array":
             return self._render_frame()
 
     def _render_frame(self) -> None:
         """
         Renders the current frame and updates the viewer if the render mode is set to "human".
         """
-        if self._viewer is None and self._render_mode == "human":
-            # launch viewer
+        if self._viewer is None and self.render_mode == "human":
+            import mujoco.viewer
             self._viewer = mujoco.viewer.launch_passive(
                 self._physics.model.ptr,
                 self._physics.data.ptr,
             )
-        if self._step_start is None and self._render_mode == "human":
+        if self._step_start is None and self.render_mode == "human":
             # initialize step timer
             self._step_start = time.time()
 
-        if self._render_mode == "human":
+        if self.render_mode == "human":
             # render viewer
             self._viewer.sync()
 

@@ -1,135 +1,73 @@
-# Manipulator-Mujoco
+# IOTA 5201 Assignment: Application of Reinforcement Learning on Cyber-Physical System(CPS)
+This is the code submission for the IOTA 5201 course. Core content includes:
+- Implementation of SAC with Improved HER buffer
+- Application of IHER-SAC on FetchPickAndPlace-v4 environment
 
-<p float="left">
-<img src="images/aubo_i5.gif" alt="a_bot GIF" width="49%">
-<img src="images/ur5e.gif" alt="b_bot GIF" width="49%">
-</p>
+<video src="assets/iher_sac_fetch.mp4" controls></video>&nbsp;<video src="assets/iher_sac.mp4" controls></video>
 
-Manipulator-Mujoco is a template repository that simplifies the setup and control of manipulators in Mujoco. It provides a generic operational space controller that can work with any robot arm. It offers a Gymnasium base environment that can be tailored for reinforcement learning tasks. This repository is built with dm_control, providing effortless configuration for different Mujoco environments.
-
-## Supported Robots
-
-Currently, the following robot arms and grippers are supported in this repository:
-
-### Robot Arms
-1. Aubo i5
-2. UR5e
-
-### Grippers
-1. DH Robotics AG95
-
-## Installation
-
-To get started, follow these steps to install the repository:
-
-1. Clone this repository to your local machine:
-
-   ```bash
-   git clone https://github.com/ian-chuang/Manipulator-Mujoco.git
-   ```
-
-2. Navigate to the root directory of the repository:
-
-   ```bash
-   cd Manipulator-Mujoco
-   ```
-
-3. Install the repository in editable mode:
-
-   ```bash
-   pip install -e .
-   ```
-
-## Demos
-
-Explore the capabilities of Manipulator-Mujoco with the provided demos located in the `/demo` folder:
-
-### Aubo i5 Arm with AG95 Gripper
-
-To run the demo for the Aubo i5 arm with the AG95 gripper, execute:
-
+# Installation
+git clone this repository:
 ```bash
-python aubo_i5_demo.py
+git clone https://github.com/xxkklose/rl_cps_course.git
 ```
 
-### UR5e Arm
-
-To run the demo for the UR5e arm, execute:
-
+we recommend using uv to install the dependencies:
 ```bash
-python ur5e_demo.py
+cd /path/to/rl_cps_course
+uv sync
+uv pip install -e .
+```
+or you can use requirements.txt for other package managers as you like:
+```bash
+pip install -r requirements.txt
+pip install -e .
 ```
 
-In the demos, you can manipulate the arm by double-clicking and selecting the target red box mocap. Hold the Ctrl key and left-click and drag to rotate or Ctrl key and right-click and drag to translate. The arm will utilize operational space control to follow the target mocap.
-
-## Setting Up Your Own Environment
-
-If you want to create your own environment, follow the structure defined in `manipulator_mujoco/envs`. Here's a simplified example of how to set up an environment:
-
-```python
-# create checkerboard floor arena
-self._arena = StandardArena()
-
-# create mocap target that OSC will try to follow
-self._target = Target(self._arena.mjcf_model)
-
-# ur5e arm
-self._arm = Arm(
-    xml_path=os.path.join(
-        os.path.dirname(__file__),
-        '../assets/robots/ur5e/ur5e.xml',
-    ),
-    eef_site_name='eef_site',
-    attachment_site_name='attachment_site'
-)
-
-# attach arm to arena
-self._arena.attach(
-    self._arm.mjcf_model, pos=[0, 0, 0], quat=[0.7071068, 0, 0, -0.7071068]
-)
-
-# generate model
-self._physics = mjcf.Physics.from_mjcf_model(self._arena.mjcf_model)
+# Usage
+To train IHER-SAC on FetchPickAndPlace-v4 environment:
+```bash
+bash train.sh iher_sac FetchPickAndPlace-v4
 ```
-
-Operational space control setup is designed to be straightforward:
-
-```python
-# set up OSC controller
-self._controller = OperationalSpaceController(
-    physics=self._physics,
-    joints=self._arm.joints,
-    eef_site=self._arm.eef_site,
-    min_effort=-150.0,
-    max_effort=150.0,
-    kp=200,
-    ko=200,
-    kv=50,
-    vmax_xyz=1.0,
-    vmax_abg=2.0,
-)
+## Benchmark Algorithms Training
+To train SAC:
+```bash
+bash train.sh sac FetchPickAndPlace-v4
 ```
-
-Before running `physics.step()`, simply calculate the target pose and run the OSC controller to move to the target pose:
-
-```python
-target_pose = calculate_target_pose_for_OSC()  # [x, y, z, qx, qy, qz, qw]
-
-# run OSC controller to move to target pose
-self._controller.run(target_pose)
-
-# step physics
-self._physics.step()
+To train HER-SAC:
+```bash
+bash train.sh her_sac FetchPickAndPlace-v4
 ```
+To train PPO:
+```bash
+bash train.sh ppo FetchPickAndPlace-v4
+```
+Parameters:
+- `iher_sac`, `her_sac`, `sac`, `ppo`: Algorithms to train.
+- `FetchPickAndPlace-v4`: Environment to train on.
+- `SEED`: Random seed for reproducibility.
+- `TOTAL_TIMESTEPS`: Total timesteps to train.
+- `BUFFER_SIZE`: Size of the replay buffer.
+- `LEARNING_RATE`: Learning rate for the optimizer.
+- `BATCH_SIZE`: Batch size for training.
+- `TAU`: Soft update coefficient for target networks.
+- `GAMMA`: Discount factor for future rewards.
+- `DEVICE`: Device to use for training (cuda or cpu).
 
-The OperationalSpaceController and Arm classes handle the details of tracking the mjcf element IDs, eliminating the need to specify joint names or actuator names. It should work seamlessly with any robot arm model, including various joint types, as long as the actuators are removed from the model since the controller automatically applies torques to each joint.
+# Evaluation
+To evaluate the trained models, you can use the following command:
+```bash
+bash eval.sh iher_sac FetchPickAndPlace-v4 202511281553
+```
+Parameters:
+- `iher_sac`, `her_sac`, `sac`, `ppo`: Algorithms to evaluate.
+- `FetchPickAndPlace-v4`: Environment to evaluate on.
+- `202511281553`: Checkpoint name to load.
 
-## Inspiration
+# Inspiration
+This repository drew inspiration from the following resources:
+- [OpenAI Baselines](https://github.com/openai/baselines)
+- [Soft Actor-Critic](https://arxiv.org/abs/1801.01290)
+- [Hindsight Experience Replay](https://arxiv.org/abs/1707.01495)
+- [mujoco_learning](https://github.com/Albusgive/mujoco_learning.git)
 
-This repository drew inspiration from the following repositories:
-
-- [ARISE-Initiative/robosuite.git](https://github.com/ARISE-Initiative/robosuite.git)
-- [ir-lab/irl_control.git](https://github.com/ir-lab/irl_control.git)
-- [abr/abr_control.git](https://github.com/abr/abr_control.git)
-
-Feel free to explore, experiment, and contribute to this repository as you work on your robotic manipulation tasks in Mujoco with operational space control.
+If this repository is helpful to you, please give it a star and cite it in your work.
