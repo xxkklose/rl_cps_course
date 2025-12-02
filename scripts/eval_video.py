@@ -60,7 +60,7 @@ def eval_video(env_id: str = "FetchPickAndPlace-v4",
     output_dir = os.path.join("output", algo, env_id) + f"_success_rate_{success_rate:.2f}"
     os.makedirs(output_dir, exist_ok=True)
     for i, frames in enumerate(sample_frames):
-        imageio.mimsave(os.path.join(output_dir, f"sample_{i}.mp4"), frames, fps=30)
+        imageio.mimsave(os.path.join(output_dir, f"sample_{i}.gif"), frames, fps=30, loop=0)
     print(f"Saved all output videos to {output_dir}")
 
 if __name__ == "__main__":
