@@ -3,7 +3,7 @@ This is the code submission for the IOTA 5201 course. Core content includes:
 - Implementation of SAC with Improved HER buffer
 - Application of IHER-SAC on FetchPickAndPlace-v4 environment
 
-<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac_fetch.mp4" controls></video>&nbsp;<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac.mp4" controls></video>
+<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac_fetch.mp4" controls width="480"></video>&nbsp;<video src="https://github.com/xxkklose/rl_cps_course/raw/master/assets/iher_sac.mp4" controls width="480"></video>
 
 # Installation
 git clone this repository:
@@ -15,7 +15,6 @@ we recommend using uv to install the dependencies:
 ```bash
 cd /path/to/rl_cps_course
 uv sync
-uv pip install -e .
 ```
 or you can use requirements.txt for other package managers as you like:
 ```bash
@@ -58,6 +57,8 @@ To evaluate the trained models, you can use the following command:
 ```bash
 bash eval.sh iher_sac FetchPickAndPlace-v4 202511281553
 ```
+You can download the pre-trained models from [here](https://drive.google.com/drive/folders/1uKdLiq7VHnL6fQFf4btCON1dNm_XQWmp) to the folder `checkpoints/`.
+
 Parameters:
 - `iher_sac`, `her_sac`, `sac`, `ppo`: Algorithms to evaluate.
 - `FetchPickAndPlace-v4`: Environment to evaluate on.
