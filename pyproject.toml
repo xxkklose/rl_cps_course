@@ -8,7 +8,11 @@ dependencies = [
     "mujoco",
     "dm-control",
     "gymnasium",
-    "gymnasium_robotics"
-    "pyyaml"
-    "imageio"
+    "gymnasium_robotics",
+    "pyyaml",
+    "imageio",
+    "stable_baselines3",
+    "pygame",
+    "tensorboard",
+    "stable-baselines3[extra]",
 ]
